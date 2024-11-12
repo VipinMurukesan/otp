@@ -64,7 +64,7 @@ namespace OTP.Module
                 }
 
                 // Read the OTP from the input stream
-                string enteredOtp = ReadOtpWithTimeout(input, expiryTimeUtc - DateTime.UtcNow);
+                string enteredOtp = ReadOtpWithTimeout1(input, expiryTimeUtc - DateTime.UtcNow);
                 if (enteredOtp == null)
                 {
                     return STATUS_OTP_TIMEOUT; // Timeout occurred
@@ -107,6 +107,37 @@ namespace OTP.Module
         {
             Random rnd = new Random();
             return rnd.Next(100000, 999999).ToString("D6");
+        }
+
+
+        public string ReadOtpWithTimeout1(Stream stream, TimeSpan timeout)
+        {
+            // Create a StreamReader to read from the stream
+            using (StreamReader reader = new StreamReader(stream, Encoding.UTF8))
+            {
+                // Create a cancellation token source to handle timeout
+                using (CancellationTokenSource cts = new CancellationTokenSource())
+                {
+                    // Start a task to read the line asynchronously
+                    var readTask = Task.Run(() =>
+                    {
+                        return reader.ReadLine();
+                    }, cts.Token);
+
+                    // Wait for the task to complete or for the timeout to occur
+                    if (Task.WhenAny(readTask, Task.Delay(timeout)).Result == readTask)
+                    {
+                        // If the read task completes within the timeout, return the result
+                        return readTask.Result;
+                    }
+                    else
+                    {
+                        // If the timeout occurs, cancel the read task and return null
+                        cts.Cancel();
+                        return null;
+                    }
+                }
+            }
         }
 
         private string ReadOtpWithTimeout(Stream input, TimeSpan timeout)
