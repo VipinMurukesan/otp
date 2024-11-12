@@ -1,0 +1,14 @@
+C:\Users\vipin\source\repos\EmailOTP\OTP\obj\Debug\net8.0\OTP.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\vipin\source\repos\EmailOTP\OTP\obj\Debug\net8.0\OTP.AssemblyInfoInputs.cache
+C:\Users\vipin\source\repos\EmailOTP\OTP\obj\Debug\net8.0\OTP.AssemblyInfo.cs
+C:\Users\vipin\source\repos\EmailOTP\OTP\obj\Debug\net8.0\OTP.csproj.CoreCompileInputs.cache
+C:\Users\vipin\source\repos\EmailOTP\OTP\bin\Debug\net8.0\OTP.exe
+C:\Users\vipin\source\repos\EmailOTP\OTP\bin\Debug\net8.0\OTP.deps.json
+C:\Users\vipin\source\repos\EmailOTP\OTP\bin\Debug\net8.0\OTP.runtimeconfig.json
+C:\Users\vipin\source\repos\EmailOTP\OTP\bin\Debug\net8.0\OTP.dll
+C:\Users\vipin\source\repos\EmailOTP\OTP\bin\Debug\net8.0\OTP.pdb
+C:\Users\vipin\source\repos\EmailOTP\OTP\obj\Debug\net8.0\OTP.dll
+C:\Users\vipin\source\repos\EmailOTP\OTP\obj\Debug\net8.0\refint\OTP.dll
+C:\Users\vipin\source\repos\EmailOTP\OTP\obj\Debug\net8.0\OTP.pdb
+C:\Users\vipin\source\repos\EmailOTP\OTP\obj\Debug\net8.0\OTP.genruntimeconfig.cache
+C:\Users\vipin\source\repos\EmailOTP\OTP\obj\Debug\net8.0\ref\OTP.dll
