@@ -1023,7 +1023,10 @@
       "xunit.runner.visualstudio/2.5.3": {},
       "OTP/1.0.0": {
         "runtime": {
-          "OTP.dll": {}
+          "OTP.dll": {
+            "assemblyVersion": "1.0.0",
+            "fileVersion": "1.0.0.0"
+          }
         }
       }
     }

@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Numerics;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -18,8 +20,9 @@ namespace OTP.Module
         public const int STATUS_OTP_TIMEOUT = 5;
 
         private const string VALID_EMAIL_DOMAIN = ".dso.org.sg";
-        private const int OTP_VALIDITY_DURATION_SECONDS = 6000;
-        private const int MAX_ATTEMPTS = 10;
+        private const int OTP_VALIDITY_DURATION_SECONDS = 60;
+        private const int OTP_MAX_ATTEMPTS = 10;
+
 
         private string? currentOtp;
         private DateTime otpGenerationTimeUtc;
@@ -28,7 +31,8 @@ namespace OTP.Module
         private readonly Func<string> otpGenerator;
         public Email_OTP_Module(Func<string> otpGenerator = null)
         {
-            this.otpGenerator = otpGenerator ?? GenerateOtp; // Use provided generator or default
+            // Use provided generator or default            
+            this.otpGenerator = otpGenerator ?? GenerateOtp;
         }
 
         public void Start() { /* Initialize resources if needed */ }
@@ -52,39 +56,62 @@ namespace OTP.Module
 
         public int CheckOtp(Stream input)
         {
-            
+
             DateTime expiryTimeUtc = otpGenerationTimeUtc.AddSeconds(OTP_VALIDITY_DURATION_SECONDS);
 
-            while (attempts < MAX_ATTEMPTS)
+            using (StreamReader reader = new StreamReader(input, Encoding.UTF8))
             {
-                // Check if timeout has occurred
-                if (DateTime.UtcNow > expiryTimeUtc)
+                using (CancellationTokenSource cts = new CancellationTokenSource())
                 {
-                    return STATUS_OTP_TIMEOUT;
-                }
+                    while (attempts < OTP_MAX_ATTEMPTS)
+                    {
+                        // Check if timeout has occurred
+                        if (DateTime.UtcNow > expiryTimeUtc)
+                        {
+                            return STATUS_OTP_TIMEOUT;
+                        }
 
-                // Read the OTP from the input stream
-                string enteredOtp = ReadOtpWithTimeout1(input, expiryTimeUtc - DateTime.UtcNow);
-                if (enteredOtp == null)
-                {
-                    return STATUS_OTP_TIMEOUT; // Timeout occurred
-                }
-                // Check if the entered OTP is correct
-                if (enteredOtp == currentOtp)
-                {
-                    return STATUS_OTP_OK;
-                }
+                        // Start a task to read the line asynchronously
+                        var readTask = Task.Run(() =>
+                        {
+                            return reader.ReadLine();
+                        }, cts.Token);
 
-                attempts++;
+                        string enteredOtp = null;
 
+                        // Wait for the task to complete or for the timeout to occur
+                        if (Task.WhenAny(readTask, Task.Delay(expiryTimeUtc - DateTime.UtcNow)).Result == readTask)
+                        {
+                            // If the read task completes within the timeout, return the result
+                            enteredOtp = readTask.Result;
+                        }
+                        else
+                        {
+                            // If the timeout occurs, cancel the read task and return null
+                            cts.Cancel();
+                            enteredOtp = null;
+                        }
+
+                        if (enteredOtp == null)
+                        {
+                            return STATUS_OTP_TIMEOUT; // Timeout occurred
+                        }
+
+                        // Check if the entered OTP is correct
+                        if (enteredOtp == currentOtp)
+                        {
+                            return STATUS_OTP_OK;
+                        }
+
+                        attempts++;
+                    }
+                }
             }
 
-            // Return STATUS_OTP_FAIL after MAX_ATTEMPTS if no correct OTP was entered
+            // Return STATUS_OTP_FAIL after OTP_MAX_ATTEMPTS if no correct OTP was entered
             return STATUS_OTP_FAIL;
         }
 
-
-        
 
         private bool IsValidEmail(string email)
         {
@@ -96,68 +123,17 @@ namespace OTP.Module
             }
             else
             {
-                return true;   
+                return true;
             }
-                
-        }
 
-              
+        }
 
         private string GenerateOtp()
         {
             Random rnd = new Random();
             return rnd.Next(100000, 999999).ToString("D6");
-        }
-
-
-        public string ReadOtpWithTimeout1(Stream stream, TimeSpan timeout)
-        {
-            // Create a StreamReader to read from the stream
-            using (StreamReader reader = new StreamReader(stream, Encoding.UTF8))
-            {
-                // Create a cancellation token source to handle timeout
-                using (CancellationTokenSource cts = new CancellationTokenSource())
-                {
-                    // Start a task to read the line asynchronously
-                    var readTask = Task.Run(() =>
-                    {
-                        return reader.ReadLine();
-                    }, cts.Token);
-
-                    // Wait for the task to complete or for the timeout to occur
-                    if (Task.WhenAny(readTask, Task.Delay(timeout)).Result == readTask)
-                    {
-                        // If the read task completes within the timeout, return the result
-                        return readTask.Result;
-                    }
-                    else
-                    {
-                        // If the timeout occurs, cancel the read task and return null
-                        cts.Cancel();
-                        return null;
-                    }
-                }
-            }
-        }
-
-        private string ReadOtpWithTimeout(Stream input, TimeSpan timeout)
-        {
-            string otp = null;
-
-            using (var cts = new CancellationTokenSource(timeout))
-            {
-                try
-                {
-                    otp = new StreamReader(input).ReadLine();
-                    return otp;
-                }
-                catch (OperationCanceledException)
-                {
-                    otp = null;
-                    return otp; // Timeout occurred
-                }
-            }
-        }
+        }                   
+              
 
         private bool SendEmail(string emailAddress, string emailBody)
         {

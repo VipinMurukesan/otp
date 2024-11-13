@@ -59,10 +59,11 @@ namespace OTPTest
             // Create a MemoryStream for the incorrect OTP inputs
             var mockInput = new MemoryStream();
             var writer = new StreamWriter(mockInput);
-            for (int i = 0; i < 15; i++)  // Write incorrect OTP 15 times
+            writer.WriteLine("111111");
+            for (int i = 0; i < 10; i++)  // Write incorrect OTP 11 times
             {
                 writer.WriteLine("654321");  // Incorrect OTP
-            }
+            }            
             writer.Flush();
             mockInput.Position = 0;  // Reset stream position to the beginning
 
